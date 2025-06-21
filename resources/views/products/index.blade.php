@@ -3,14 +3,17 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Product List</h2>
-        <a href="{{ route('products.create') }}" class="btn btn-primary">+ Add Product</a>
+        @auth
+            @if (auth()->user()->role === 'admin')
+                <a href="{{ route('products.create') }}" class="btn btn-primary">+ Add Product</a>
+            @endif
+        @endauth
     </div>
 
     {{-- Search and Filter Form --}}
     <form method="GET" action="{{ route('products.index') }}" class="row mb-4">
         <div class="col-md-4">
-            <input type="text" name="search" class="form-control" placeholder="Search by name..."
-                   value="{{ request('search') }}">
+            <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ request('search') }}">
         </div>
         <div class="col-md-4">
             <select name="category" class="form-select">
@@ -34,7 +37,7 @@
 
     {{-- Products Table --}}
     @if($products->count())
-        <table class="table table-striped table-bordered">
+        <table class="table table-striped table-bordered align-middle">
             <thead class="table-dark">
                 <tr>
                     @php
@@ -49,31 +52,11 @@
                         }
                     @endphp
 
-                    <th>
-                        <a href="{{ sortUrl('name') }}" class="text-white text-decoration-none">
-                            Name {{ sortIcon('name') }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ sortUrl('category') }}" class="text-white text-decoration-none">
-                            Category {{ sortIcon('category') }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ sortUrl('price') }}" class="text-white text-decoration-none">
-                            Price {{ sortIcon('price') }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ sortUrl('quantity') }}" class="text-white text-decoration-none">
-                            Quantity {{ sortIcon('quantity') }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ sortUrl('supplier') }}" class="text-white text-decoration-none">
-                            Supplier {{ sortIcon('supplier') }}
-                        </a>
-                    </th>
+                    <th><a href="{{ sortUrl('name') }}" class="text-white text-decoration-none">Name {{ sortIcon('name') }}</a></th>
+                    <th><a href="{{ sortUrl('category_id') }}" class="text-white text-decoration-none">Category {{ sortIcon('category_id') }}</a></th>
+                    <th><a href="{{ sortUrl('price') }}" class="text-white text-decoration-none">Price {{ sortIcon('price') }}</a></th>
+                    <th><a href="{{ sortUrl('quantity') }}" class="text-white text-decoration-none">Quantity {{ sortIcon('quantity') }}</a></th>
+                    <th><a href="{{ sortUrl('supplier_id') }}" class="text-white text-decoration-none">Supplier {{ sortIcon('supplier_id') }}</a></th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -81,18 +64,48 @@
             @foreach($products as $product)
                 <tr>
                     <td>{{ $product->name }}</td>
-                    <td>{{ $product->category }}</td>
-                    <td>₱{{ $product->price }}</td>
-                    <td>{{ $product->quantity }}</td>
-                    <td>{{ $product->supplier }}</td>
+                    <td>{{ $product->category->name ?? 'N/A' }}</td>
+                    <td>₱{{ number_format($product->price, 2) }}</td>
                     <td>
-                        <a href="{{ route('products.edit', $product) }}" class="btn btn-sm btn-warning">Edit</a>
-                        <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline"
-                              onsubmit="return confirm('Are you sure?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-danger">Delete</button>
-                        </form>
+                        {{-- Quantity Badge --}}
+                        @if ($product->quantity < 5)
+                            <span class="badge bg-danger">Low ({{ $product->quantity }})</span>
+                        @elseif ($product->quantity <= 10)
+                            <span class="badge bg-warning text-dark">Medium ({{ $product->quantity }})</span>
+                        @else
+                            <span class="badge bg-success">{{ $product->quantity }}</span>
+                        @endif
+
+                        @auth
+                            @if (auth()->user()->role === 'admin')
+                                {{-- Sell Form --}}
+                                <form action="{{ route('products.sell', $product) }}" method="POST" class="d-inline ms-2">
+                                    @csrf
+                                    <input type="number" name="quantity" min="1" max="{{ $product->quantity }}" style="width: 60px;" required>
+                                    <button class="btn btn-sm btn-outline-info">Sell</button>
+                                </form>
+
+                                {{-- Add Quantity Form --}}
+                                <form action="{{ route('products.addQuantity', $product) }}" method="POST" class="d-inline ms-1">
+                                    @csrf
+                                    <input type="number" name="quantity" min="1" style="width: 60px;" required>
+                                    <button class="btn btn-sm btn-outline-success">Add</button>
+                                </form>
+                            @endif
+                        @endauth
+                    </td>
+                    <td>{{ $product->supplier->name ?? 'N/A' }}</td>
+                    <td>
+                        @auth
+                            @if (auth()->user()->role === 'admin')
+                                <a href="{{ route('products.edit', $product) }}" class="btn btn-sm btn-warning mb-1">Edit</a>
+                                <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline mb-1" onsubmit="return confirm('Are you sure?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            @endif
+                        @endauth
                     </td>
                 </tr>
             @endforeach

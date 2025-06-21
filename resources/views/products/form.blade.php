@@ -5,7 +5,14 @@
 
 <div class="mb-3">
     <label class="form-label">Category</label>
-    <input type="text" name="category" class="form-control" value="{{ old('category', $product->category ?? '') }}">
+    <select name="category_id" class="form-select" required>
+        <option value="">-- Select Category --</option>
+        @foreach ($categories as $cat)
+            <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id ?? '') == $cat->id ? 'selected' : '' }}>
+                {{ $cat->name }}
+            </option>
+        @endforeach
+    </select>
 </div>
 
 <div class="mb-3">
@@ -13,12 +20,15 @@
     <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price', $product->price ?? '') }}" required>
 </div>
 
-<div class="mb-3">
-    <label class="form-label">Quantity</label>
-    <input type="number" name="quantity" class="form-control" value="{{ old('quantity', $product->quantity ?? '') }}" required>
-</div>
 
 <div class="mb-3">
     <label class="form-label">Supplier</label>
-    <input type="text" name="supplier" class="form-control" value="{{ old('supplier', $product->supplier ?? '') }}">
+    <select name="supplier_id" class="form-select" required>
+        <option value="">-- Select Supplier --</option>
+        @foreach ($suppliers as $sup)
+            <option value="{{ $sup->id }}" {{ old('supplier_id', $product->supplier_id ?? '') == $sup->id ? 'selected' : '' }}>
+                {{ $sup->name }}
+            </option>
+        @endforeach
+    </select>
 </div>

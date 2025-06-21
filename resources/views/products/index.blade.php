@@ -12,10 +12,10 @@
 
     {{-- Search and Filter Form --}}
     <form method="GET" action="{{ route('products.index') }}" class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ request('search') }}">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select name="category" class="form-select">
                 <option value="">All Categories</option>
                 @foreach ($categories as $cat)
@@ -25,9 +25,19 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-4">
-            <a href="{{ route('products.index') }}" class="btn btn-secondary">Reset</a>
+        <div class="col-md-3">
+            <select name="supplier" class="form-select">
+                <option value="">All Suppliers</option>
+                @foreach ($suppliers as $sup)
+                    <option value="{{ $sup }}" {{ request('supplier') == $sup ? 'selected' : '' }}>
+                        {{ $sup }}
+                    </option>
+                @endforeach
+            </select>
         </div>
+        <!-- <div class="col-md-3">
+            <a href="{{ route('products.index') }}" class="btn btn-secondary w-100">Reset</a>
+        </div> -->
     </form>
 
     {{-- Flash Message --}}
@@ -67,7 +77,6 @@
                     <td>{{ $product->category->name ?? 'N/A' }}</td>
                     <td>₱{{ number_format($product->price, 2) }}</td>
                     <td>
-                        {{-- Quantity Badge --}}
                         @if ($product->quantity < 5)
                             <span class="badge bg-danger">Low ({{ $product->quantity }})</span>
                         @elseif ($product->quantity <= 10)
@@ -78,14 +87,12 @@
 
                         @auth
                             @if (auth()->user()->role === 'admin')
-                                {{-- Sell Form --}}
                                 <form action="{{ route('products.sell', $product) }}" method="POST" class="d-inline ms-2">
                                     @csrf
                                     <input type="number" name="quantity" min="1" max="{{ $product->quantity }}" style="width: 60px;" required>
                                     <button class="btn btn-sm btn-outline-info">Sell</button>
                                 </form>
 
-                                {{-- Add Quantity Form --}}
                                 <form action="{{ route('products.addQuantity', $product) }}" method="POST" class="d-inline ms-1">
                                     @csrf
                                     <input type="number" name="quantity" min="1" style="width: 60px;" required>
@@ -115,11 +122,12 @@
         <p>No products found.</p>
     @endif
 
-    {{-- Auto-submit Search/Filter Script --}}
+    {{-- Auto-submit Filter Script --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.querySelector('input[name="search"]');
             const categorySelect = document.querySelector('select[name="category"]');
+            const supplierSelect = document.querySelector('select[name="supplier"]');
 
             if (searchInput) {
                 searchInput.addEventListener('input', function () {
@@ -132,6 +140,12 @@
 
             if (categorySelect) {
                 categorySelect.addEventListener('change', function () {
+                    this.form.submit();
+                });
+            }
+
+            if (supplierSelect) {
+                supplierSelect.addEventListener('change', function () {
                     this.form.submit();
                 });
             }

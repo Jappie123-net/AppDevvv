@@ -9,36 +9,43 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Product::with(['category', 'supplier']);
+public function index(Request $request)
+{
+    $query = Product::with(['category', 'supplier']);
 
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('category')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('name', $request->category);
-            });
-        }
-
-        $sortBy = $request->get('sort_by', 'name');
-        $order = $request->get('order', 'asc');
-        $query->orderBy($sortBy, $order);
-
-        $products = $query->get();
-        $categories = Category::pluck('name');
-
-        
-        return view('products.index', compact('products', 'categories'));
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
     }
+
+    if ($request->filled('category')) {
+        $query->whereHas('category', function ($q) use ($request) {
+            $q->where('name', $request->category);
+        });
+    }
+
+    if ($request->filled('supplier')) {
+        $query->whereHas('supplier', function ($q) use ($request) {
+            $q->where('name', $request->supplier);
+        });
+    }
+
+    $sortBy = $request->get('sort_by', 'name');
+    $order = $request->get('order', 'asc');
+    $query->orderBy($sortBy, $order);
+
+    $products = $query->get();
+    $categories = Category::pluck('name');
+    $suppliers = Supplier::pluck('name');
+
+    return view('products.index', compact('products', 'categories', 'suppliers'));
+}
+
 
     public function create()
     {
         $categories = Category::all();
         $suppliers = Supplier::all();
-        return view('products.create', compact('categories', 'suppliers'));
+        return view('products.create', compact('products', 'categories', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -123,5 +130,12 @@ class ProductController extends Controller
         $product->save();
 
         return redirect()->route('products.index')->with('success', 'Quantity added successfully!');
+    }
+
+    // ✅ This is the missing method
+    public function destroy(Product $product)
+    {
+        $product->delete();
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully!');
     }
 }
